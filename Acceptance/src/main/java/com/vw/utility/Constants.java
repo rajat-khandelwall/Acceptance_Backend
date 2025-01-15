@@ -4,7 +4,25 @@ public interface Constants {
 
     String ACCEPTANCE = "/acceptance";
     String CREATE_PROJECT = "/create-project";
+    String CREATE_LOC_PROJECT = "/create-location-project";
+    String AGRMNT_NUMBER_GEN_DATE = "/{agrmntNumber}/{generatedDate}";
+    String AGRMNT_NUMBER_GEN_DATE_LOCATION = "/{agrmntNumber}/{generatedDate}/{location}";
+    String AGRMNT = "/agrmntNumber";
+    String UPDATE_BILLING = "/update-billing";
+    String UPDATE_BILLING_LOCATION = "/update-billing-location";
+    String DOWNLOAD_REPORT = "/downloadReports";
+    String DOWNLOAD_REPORT_LOCATION = "/downloadReportsLocation";
+    String UPDATE_REPORT_LOCATION = "/updateReportsLocation";
+    String SIGNUP = "/signup";
+    String LOGIN = "/login";
+    String SUCCESS_MSG = "Login successful";
+    String FAIL_MSG = "Invalid email or password";
 
+    String ATTACHMENT = "attachment";
+    String ZIP_FILE_NAME = "AcceptanceReports.zip";
+    String PUNE = "Pune";
+    String GURUGRAM = "Gurugram";
+    String BANGLORE = "Bangalore";
     int ZERO = 0;
     int ONE = 1;
     int TWO = 2;
@@ -27,19 +45,19 @@ public interface Constants {
     int NINETEEN = 19;
     int TWENTY = 20;
 
-    String ITS_IMG="its.png";
+    String ITS_IMG = "its.png";
     String ITS_FILE = "its";
     int EMU_VALUE = 70;
     String ACCEPT_IMG = "acceptance.png";
     String ACCEPT_FILE = "acceptance";
     int ACC_EMU_VALUE_ONE = 320;
     String SKODA_IMG = "skoda.png";
-    String AUDI_IMG="Audi.jpg";
+    String AUDI_IMG = "Audi.jpg";
     String SKODA_FILE = "skoda";
-    String SA_IMG="SouthAfrica.png";
-    String SAV_IMG="Savwipl.jpg";
-    String CHAT_IMG="Cattanooga.png";
-    
+    String SA_IMG = "SouthAfrica.png";
+    String SAV_IMG = "Savwipl.jpg";
+    String CHAT_IMG = "Cattanooga.png";
+
 
     String PROJECT = "Project";
     String DATE = "Date";
@@ -53,10 +71,10 @@ public interface Constants {
     String SR = "Sr.";
     String TASK_LIST = "Task List";
     String TOTAL_BUDGET = "Total Budget";
-    String CURRENT_MONTH_BDGT =  "Current Month Budget";
+    String CURRENT_MONTH_BDGT = "Current Month Budget";
     String REMAINING_BDGT = "Remaining Budget";
     String SERVICE_COST = "Service cost";
-    String MISCELLANEOUS ="Miscellaneous";
+    String MISCELLANEOUS = "Miscellaneous";
     String TOTAL = "Total";
     String DECLAIRMENT = "We hereby  declare that the information on this Acceptance Criteria is correct and the invoice for month of ";
     String CAPTION_ONE = "1";
@@ -71,14 +89,14 @@ public interface Constants {
     String INPUT_FORMAT = "yyyy-MM-dd";
     String OUTPUT_FORMATE = "dd-MMM-yyyy";
 
-     String ZERO_PER="0%";
-     String TWENTY_PER="20%";
-     String FOURTY_PER="40%";
-     String THIRTY_FIVE_PER="35%";
-     String SPLIT = "\\.";
+    String ZERO_PER = "0%";
+    String TWENTY_PER = "20%";
+    String FOURTY_PER = "40%";
+    String THIRTY_FIVE_PER = "35%";
+    String SPLIT = "\\.";
 
-     String BILLING_DETAILS = "Billing details : ";
-     String L1 = "L1 :";
+    String BILLING_DETAILS = "Billing details : ";
+    String L1 = "L1 :";
     String L2 = " L2 :";
     String L3 = " L3 :";
 }

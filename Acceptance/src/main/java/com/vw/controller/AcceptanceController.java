@@ -1,7 +1,7 @@
 package com.vw.controller;
 
 import static com.vw.utility.Constants.ACCEPTANCE;
-import static com.vw.utility.Constants.CREATE_PROJECT;
+import static com.vw.utility.Constants.*;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -17,6 +17,7 @@ import java.util.Locale;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
+import com.vw.model.SignupEmployee;
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -55,7 +56,7 @@ public class AcceptanceController {
 		return projectResponse;
 	}
 	
-	@PostMapping(value = "/create-location-project")
+	@PostMapping(value = CREATE_LOC_PROJECT)
 	public ResponseEntity<String> createProjectLocation(@RequestBody ProjectDetails projectDetails) throws InvalidFormatException, IOException {
 		log.info("In Controller......");
 		ResponseEntity<String> projectResponse = acceptanceService.createProjectLocation(projectDetails);
@@ -63,39 +64,39 @@ public class AcceptanceController {
 		return projectResponse;
 	}
 
-	@GetMapping(value = "/{agrmntNumber}/{generatedDate}")
+	@GetMapping(value = AGRMNT_NUMBER_GEN_DATE)
 	public ResponseEntity<ProjectDetails> getProjectDetail(@PathVariable String agrmntNumber, @PathVariable String generatedDate) {
 		ProjectDetails proDetails = acceptanceService.getProject(agrmntNumber, generatedDate);
 		return ResponseEntity.ok().body(proDetails);
 	}
 	
-	@GetMapping(value = "/{agrmntNumber}/{generatedDate}/{location}")
+	@GetMapping(value = AGRMNT_NUMBER_GEN_DATE_LOCATION)
 	public ResponseEntity<ProjectDetails> getProjectDetailLocation(@PathVariable String agrmntNumber, @PathVariable String generatedDate, @PathVariable String location) {
 		ProjectDetails proDetails = acceptanceService.getProjectLocation(agrmntNumber, generatedDate, location);
 		return ResponseEntity.ok().body(proDetails);
 	}
 
-	@GetMapping(value = "/agrmntNumber")
+	@GetMapping(value = AGRMNT)
 	public ResponseEntity<List<String>> getAgreementNumbers(@RequestParam(name = "brand") String brand) {
 		List<String> agreementNumbers = acceptanceService.getAgreementNumbers(brand);
 		return ResponseEntity.ok().body(agreementNumbers);
 	}
 
-	@PostMapping(value = "/update-billing")
+	@PostMapping(value = UPDATE_BILLING)
 	public ResponseEntity<String> updateBilling(@RequestBody ProjectDetails projectDetails){
 		ResponseEntity<String> updateResponse = acceptanceService.updateBilling(projectDetails);
 		log.info("Billing updated successfully");
 		return updateResponse;
 	}
 	
-	@PostMapping(value = "/update-billing-location")
+	@PostMapping(value = UPDATE_BILLING_LOCATION)
 	public ResponseEntity<String> updateBillingLocation(@RequestBody ProjectDetails projectDetails){
 		ResponseEntity<String> updateResponse = acceptanceService.updateBillingLocation(projectDetails);
 		log.info("Billing updated successfully");
 		return updateResponse;
 	}
 	
-	@PostMapping(value = "/downloadReports")
+	@PostMapping(value = DOWNLOAD_REPORT)
     public ResponseEntity<FileSystemResource> downloadReports(@RequestBody String projectName) {
         String sourceDir = "/home/ec2-user";  // Directory where reports are stored
         String zipFileName = "/home/ec2-user/Acceptance/" + projectName + ".zip";  // Location for the ZIP file
@@ -148,13 +149,13 @@ public class AcceptanceController {
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
-        headers.setContentDispositionFormData("attachment", projectName + ".zip");
+        headers.setContentDispositionFormData(ATTACHMENT, projectName + ".zip");
         headers.setContentLength(file.length());
 
         return new ResponseEntity<>(new FileSystemResource(file), headers, HttpStatus.OK);
     }
 	
-	@PostMapping(value = "/downloadReportsLocation")
+	@PostMapping(value = DOWNLOAD_REPORT_LOCATION)
 	public ResponseEntity<FileSystemResource> downloadReportLocation(@RequestBody ProjectDetails projectDetails) {
 		
         String sourceDir = "/home/ec2-user";  // Directory where reports are stored
@@ -171,7 +172,7 @@ public class AcceptanceController {
 	        if (file.exists()) {
 	            HttpHeaders headers = new HttpHeaders();
 	            headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
-	            headers.setContentDispositionFormData("attachment", reportFileName);
+	            headers.setContentDispositionFormData(ATTACHMENT, reportFileName);
 	            headers.setContentLength(file.length());
 
 	            return new ResponseEntity<>(new FileSystemResource(file), headers, HttpStatus.OK);
@@ -185,14 +186,14 @@ public class AcceptanceController {
 	    }
 	}
 	
-	@PostMapping(value = "/updateReportsLocation")
+	@PostMapping(value = UPDATE_REPORT_LOCATION)
 	public ResponseEntity<FileSystemResource> downloadReport(@RequestBody ProjectDetails projectDetails) {
         String sourceDir = "/home/ec2-user";  // Directory where reports are stored
 
         LocalDate date = LocalDate.parse(projectDetails.getGeneratedDate(), DateTimeFormatter.ofPattern("yyyy-MM-dd", Locale.ENGLISH));
 	    String month = date.getMonth().toString().toUpperCase();
 
-	    String[] locations = {"Pune", "Gurugram", "Bangalore"};
+	    String[] locations = {PUNE, GURUGRAM, BANGLORE};
 	    List<Path> files = new ArrayList<>();
  
 	    try {
@@ -208,13 +209,12 @@ public class AcceptanceController {
 	            File file = files.get(0).toFile();
 	            HttpHeaders headers = new HttpHeaders();
 	            headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
-	            headers.setContentDispositionFormData("attachment", file.getName());
+	            headers.setContentDispositionFormData(ATTACHMENT, file.getName());
 	            headers.setContentLength(file.length());
 
 	            return new ResponseEntity<>(new FileSystemResource(file), headers, HttpStatus.OK);
 	        } else if (files.size() > 1) {
-	            String zipFileName = "AcceptanceReports.zip";
-	            Path zipFilePath = Paths.get(sourceDir, zipFileName);
+	            Path zipFilePath = Paths.get(sourceDir, ZIP_FILE_NAME);
 
 	            try (FileOutputStream fos = new FileOutputStream(zipFilePath.toFile());
 	                 ZipOutputStream zos = new ZipOutputStream(fos)) {
@@ -233,7 +233,7 @@ public class AcceptanceController {
 
 	            HttpHeaders headers = new HttpHeaders();
 	            headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
-	            headers.setContentDispositionFormData("attachment", zipFileName);
+	            headers.setContentDispositionFormData(ATTACHMENT, ZIP_FILE_NAME);
 	            headers.setContentLength(zipFile.length());
 
 	            return new ResponseEntity<>(new FileSystemResource(zipFile), headers, HttpStatus.OK);
@@ -245,4 +245,20 @@ public class AcceptanceController {
 	        return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
 	    }
 	}
+
+	@PostMapping(value = SIGNUP)
+	public ResponseEntity<String> employeeSignup(@RequestBody SignupEmployee employee) {
+		return acceptanceService.signupEmployee(employee);
+	}
+
+	@PostMapping(value = LOGIN)
+	public ResponseEntity<String> login(@RequestParam String emailId, @RequestParam String password) {
+		boolean isValidUser = acceptanceService.validateLogin(emailId, password);
+		if (isValidUser) {
+			return ResponseEntity.ok(SUCCESS_MSG);
+		} else {
+			return ResponseEntity.status(401).body(FAIL_MSG);
+		}
+	}
 }
+

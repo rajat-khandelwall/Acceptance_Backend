@@ -8,7 +8,10 @@ import java.time.format.DateTimeFormatter;
 import java.time.temporal.TemporalAdjusters;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 
+import com.vw.model.SignupEmployee;
+import com.vw.repository.LoginRepository;
 import org.apache.commons.codec.binary.StringUtils;
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 import org.slf4j.Logger;
@@ -27,372 +30,389 @@ import com.vw.utility.Utilities;
 
 @Service
 public class AcceptanceServiceImpl implements AcceptanceService {
-	Logger log = LoggerFactory.getLogger(AcceptanceServiceImpl.class);
+    Logger log = LoggerFactory.getLogger(AcceptanceServiceImpl.class);
 
-	@Autowired
-	private AcceptanceRepository repository;
+    @Autowired
+    private AcceptanceRepository repository;
 
-	@Autowired
-	private RemainingRepository rem_repository;
+    @Autowired
+    private LoginRepository loginRepository;
 
-	ResponseEntity response = null;
+    @Autowired
+    private RemainingRepository rem_repository;
 
-	@Override
-	public ResponseEntity<String> createProject(ProjectDetails projectDetails) {
-		log.info("inside the createProject() method ");
+    ResponseEntity response = null;
 
-		LocalDate generatedDate = Utilities.dateConvert(projectDetails.getGeneratedDate());
-		LocalDate from = Utilities.dateConvert(projectDetails.getFromDate());
-		LocalDate fromDate = LocalDate.of(from.getYear(), from.getMonth(), 1);
-		LocalDate decemberEndDate = LocalDate.of(generatedDate.getYear(), Month.DECEMBER, 31);
+    @Override
+    public ResponseEntity<String> createProject(ProjectDetails projectDetails) {
+        log.info("inside the createProject() method ");
 
-		for (LocalDate date = fromDate; !date.isAfter(decemberEndDate); date = date.plusMonths(1)) {
-			LocalDate fromDate1 = LocalDate.of(date.getYear(), date.getMonth(), 1);
+        LocalDate generatedDate = Utilities.dateConvert(projectDetails.getGeneratedDate());
+        LocalDate from = Utilities.dateConvert(projectDetails.getFromDate());
+        LocalDate fromDate = LocalDate.of(from.getYear(), from.getMonth(), 1);
+        LocalDate decemberEndDate = LocalDate.of(generatedDate.getYear(), Month.DECEMBER, 31);
 
-			LocalDate lastDate = date.with(TemporalAdjusters.lastDayOfMonth());
-			LocalDate toDate1 = lastDate;
-			projectDetails.setFromDate(fromDate1.toString());
-			projectDetails.setToDate(toDate1.toString());
+        for (LocalDate date = fromDate; !date.isAfter(decemberEndDate); date = date.plusMonths(1)) {
+            LocalDate fromDate1 = LocalDate.of(date.getYear(), date.getMonth(), 1);
 
-			if (generatedDate.getMonth() == date.getMonth()) {
-				ProjectDetails projectClone = new ProjectDetails();
+            LocalDate lastDate = date.with(TemporalAdjusters.lastDayOfMonth());
+            LocalDate toDate1 = lastDate;
+            projectDetails.setFromDate(fromDate1.toString());
+            projectDetails.setToDate(toDate1.toString());
 
-				try {
-					Utilities.prepairePersistanceData(projectDetails, projectClone);
-					Utilities.generateReport(projectDetails, date);
-				} catch (IOException | InvalidFormatException e) {
-					e.printStackTrace();
-				}
-				repository.save(projectClone);
-				log.debug("Record has been Stored ");
-				response = new ResponseEntity(HttpStatus.CREATED);
+            if (generatedDate.getMonth() == date.getMonth()) {
+                ProjectDetails projectClone = new ProjectDetails();
 
-			} else {
-				ProjectDetails previousReport = repository.findByAgrmntNumberAndGeneratedDate(
-						projectDetails.getAgrmntNumber(), date.minusMonths(1).getMonthValue());
-				Utilities.calculateCostPerMonth(projectDetails, previousReport);
-				ProjectDetails projectClone = new ProjectDetails();
-				projectDetails.setGeneratedDate(date.toString());
-				Utilities.prepairePersistanceData(projectDetails, projectClone);
+                try {
+                    Utilities.prepairePersistanceData(projectDetails, projectClone);
+                    Utilities.generateReport(projectDetails, date);
+                } catch (IOException | InvalidFormatException e) {
+                    e.printStackTrace();
+                }
+                repository.save(projectClone);
+                log.debug("Record has been Stored ");
+                response = new ResponseEntity(HttpStatus.CREATED);
 
-				try {
-					Utilities.generateReport(projectDetails, date);
-				} catch (IOException e) {
-					e.printStackTrace();
-				} catch (InvalidFormatException e) {
-					e.printStackTrace();
-				}
-				repository.save(projectClone);
-				log.debug("Record has been Stored ");
-				response = new ResponseEntity(HttpStatus.CREATED);
-			}
-		}
-		return response;
-	}
+            } else {
+                ProjectDetails previousReport = repository.findByAgrmntNumberAndGeneratedDate(
+                        projectDetails.getAgrmntNumber(), date.minusMonths(1).getMonthValue());
+                Utilities.calculateCostPerMonth(projectDetails, previousReport);
+                ProjectDetails projectClone = new ProjectDetails();
+                projectDetails.setGeneratedDate(date.toString());
+                Utilities.prepairePersistanceData(projectDetails, projectClone);
 
-	@Override
-	public ResponseEntity<String> createProjectLocation(ProjectDetails projectDetails) {
-		log.info("inside the createProject() method ");
-		LocalDate generatedDate = Utilities.dateConvert(projectDetails.getGeneratedDate());
-		LocalDate from = Utilities.dateConvert(projectDetails.getFromDate());
-		LocalDate fromDate = LocalDate.of(from.getYear(), from.getMonth(), 1);
-		LocalDate decemberEndDate = LocalDate.of(generatedDate.getYear(), Month.DECEMBER, 31);
+                try {
+                    Utilities.generateReport(projectDetails, date);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                } catch (InvalidFormatException e) {
+                    e.printStackTrace();
+                }
+                repository.save(projectClone);
+                log.debug("Record has been Stored ");
+                response = new ResponseEntity(HttpStatus.CREATED);
+            }
+        }
+        return response;
+    }
 
-		for (LocalDate date = fromDate; !date.isAfter(decemberEndDate); date = date.plusMonths(1)) {
-			LocalDate fromDate1 = LocalDate.of(date.getYear(), date.getMonth(), 1);
+    @Override
+    public ResponseEntity<String> createProjectLocation(ProjectDetails projectDetails) {
+        log.info("inside the createProject() method ");
+        LocalDate generatedDate = Utilities.dateConvert(projectDetails.getGeneratedDate());
+        LocalDate from = Utilities.dateConvert(projectDetails.getFromDate());
+        LocalDate fromDate = LocalDate.of(from.getYear(), from.getMonth(), 1);
+        LocalDate decemberEndDate = LocalDate.of(generatedDate.getYear(), Month.DECEMBER, 31);
 
-			LocalDate lastDate = date.with(TemporalAdjusters.lastDayOfMonth());
-			LocalDate toDate1 = lastDate;
-			projectDetails.setFromDate(fromDate1.toString());
-			projectDetails.setToDate(toDate1.toString());
+        for (LocalDate date = fromDate; !date.isAfter(decemberEndDate); date = date.plusMonths(1)) {
+            LocalDate fromDate1 = LocalDate.of(date.getYear(), date.getMonth(), 1);
 
-			if (generatedDate.getMonth() == date.getMonth()) {
-				ProjectDetails projectClone = new ProjectDetails();
+            LocalDate lastDate = date.with(TemporalAdjusters.lastDayOfMonth());
+            LocalDate toDate1 = lastDate;
+            projectDetails.setFromDate(fromDate1.toString());
+            projectDetails.setToDate(toDate1.toString());
 
-				try {
-					Utilities.prepairePersistanceData(projectDetails, projectClone);
-					Utilities.generateReport(projectDetails, date);
-				} catch (IOException | InvalidFormatException e) {
-					e.printStackTrace();
-				}
-				if (projectClone.getRemainingData() == null) {
-					RemainingData existingRemData = rem_repository.findRemData(projectClone.getAgrmntNumber());
-					existingRemData.setSrvcRemainBdgt(projectClone.getSrvcRemainBdgt());
-					existingRemData.setMiscRemainBdgt(projectClone.getMiscRemainBdgt());
-					existingRemData.setTotalRemainBdgt(projectClone.getTotalRemainBdgt());
-					rem_repository.save(existingRemData);
-				}
-				repository.save(projectClone);
-				log.debug("Record has been Stored ");
-				response = new ResponseEntity(HttpStatus.CREATED);
+            if (generatedDate.getMonth() == date.getMonth()) {
+                ProjectDetails projectClone = new ProjectDetails();
 
-			}
-		}
-		return response;
-	}
+                try {
+                    Utilities.prepairePersistanceData(projectDetails, projectClone);
+                    Utilities.generateReport(projectDetails, date);
+                } catch (IOException | InvalidFormatException e) {
+                    e.printStackTrace();
+                }
+                if (projectClone.getRemainingData() == null) {
+                    RemainingData existingRemData = rem_repository.findRemData(projectClone.getAgrmntNumber());
+                    existingRemData.setSrvcRemainBdgt(projectClone.getSrvcRemainBdgt());
+                    existingRemData.setMiscRemainBdgt(projectClone.getMiscRemainBdgt());
+                    existingRemData.setTotalRemainBdgt(projectClone.getTotalRemainBdgt());
+                    rem_repository.save(existingRemData);
+                }
+                repository.save(projectClone);
+                log.debug("Record has been Stored ");
+                response = new ResponseEntity(HttpStatus.CREATED);
 
-	@Override
-	public ProjectDetails getProject(String agrmntNumber, String generatedDate) {
-		LocalDate date = Utilities.dateConvert(generatedDate);
-		int month = date.getMonthValue();
-		return repository.findByAgrmntNumberAndGeneratedDate(agrmntNumber, month);
-	}
+            }
+        }
+        return response;
+    }
 
-	@Override
-	public ProjectDetails getProjectLocation(String agrmntNumber, String generatedDate, String location) {
-		LocalDate date = Utilities.dateConvert(generatedDate);
-		int month = date.getMonthValue();
+    @Override
+    public ProjectDetails getProject(String agrmntNumber, String generatedDate) {
+        LocalDate date = Utilities.dateConvert(generatedDate);
+        int month = date.getMonthValue();
+        return repository.findByAgrmntNumberAndGeneratedDate(agrmntNumber, month);
+    }
 
-		ProjectDetails projectDetails = repository.findByAgrmntNumberAndGeneratedDateAndLocation(agrmntNumber, month,
-				location);
-		if (projectDetails == null) {
-			projectDetails = repository.findByAgrmntNumberAndGeneratedDateAndLocation(agrmntNumber, month, "Pune");
-			if (projectDetails == null) {
-				projectDetails = repository.findByAgrmntNumberAndGeneratedDateAndLocation(agrmntNumber, month,
-						"Bangalore");
-				if (projectDetails == null) {
-					projectDetails = repository.findByAgrmntNumberAndGeneratedDateAndLocation(agrmntNumber, month,
-							"Gurugram");
-					if (projectDetails == null) {
-						projectDetails = repository.findByAgrmntNumberAndGeneratedDateAndLocation(agrmntNumber,
-								month - 1, location);
+    @Override
+    public ProjectDetails getProjectLocation(String agrmntNumber, String generatedDate, String location) {
+        LocalDate date = Utilities.dateConvert(generatedDate);
+        int month = date.getMonthValue();
 
-						RemainingData rem_data = rem_repository.findRemData(agrmntNumber);
+        ProjectDetails projectDetails = repository.findByAgrmntNumberAndGeneratedDateAndLocation(agrmntNumber, month,
+                location);
+        if (projectDetails == null) {
+            projectDetails = repository.findByAgrmntNumberAndGeneratedDateAndLocation(agrmntNumber, month, "Pune");
+            if (projectDetails == null) {
+                projectDetails = repository.findByAgrmntNumberAndGeneratedDateAndLocation(agrmntNumber, month,
+                        "Bangalore");
+                if (projectDetails == null) {
+                    projectDetails = repository.findByAgrmntNumberAndGeneratedDateAndLocation(agrmntNumber, month,
+                            "Gurugram");
+                    if (projectDetails == null) {
+                        projectDetails = repository.findByAgrmntNumberAndGeneratedDateAndLocation(agrmntNumber,
+                                month - 1, location);
 
-						projectDetails.setSrvcMonthlyCost(0);
-						projectDetails.setMiscMonthlyBdgt(0);
-						projectDetails.setTotalMonthlyBdgt(0);
-						projectDetails.setMiscPricing(0);
-						projectDetails.setJustification("");
-						projectDetails.setSrvcRemainBdgt(rem_data.getSrvcRemainBdgt());
-						projectDetails.setMiscRemainBdgt(rem_data.getMiscRemainBdgt());
-						projectDetails.setTotalRemainBdgt(rem_data.getTotalRemainBdgt());
+                        RemainingData rem_data = rem_repository.findRemData(agrmntNumber);
 
-						LocalDate generatedLocalDate = LocalDate.parse(generatedDate, DateTimeFormatter.ISO_DATE);
-						YearMonth yearMonth = YearMonth.from(generatedLocalDate);
-						LocalDate fromDate = yearMonth.atDay(1);
-						LocalDate toDate = yearMonth.atEndOfMonth();
+                        projectDetails.setSrvcMonthlyCost(0);
+                        projectDetails.setMiscMonthlyBdgt(0);
+                        projectDetails.setTotalMonthlyBdgt(0);
+                        projectDetails.setMiscPricing(0);
+                        projectDetails.setJustification("");
+                        projectDetails.setSrvcRemainBdgt(rem_data.getSrvcRemainBdgt());
+                        projectDetails.setMiscRemainBdgt(rem_data.getMiscRemainBdgt());
+                        projectDetails.setTotalRemainBdgt(rem_data.getTotalRemainBdgt());
 
-						projectDetails.setFromDate(fromDate.toString());
-						projectDetails.setToDate(toDate.toString());
-						projectDetails.setGeneratedDate(generatedDate);
-					
-				} else {
+                        LocalDate generatedLocalDate = LocalDate.parse(generatedDate, DateTimeFormatter.ISO_DATE);
+                        YearMonth yearMonth = YearMonth.from(generatedLocalDate);
+                        LocalDate fromDate = yearMonth.atDay(1);
+                        LocalDate toDate = yearMonth.atEndOfMonth();
 
-					RemainingData rem_data = rem_repository.findRemData(agrmntNumber);
+                        projectDetails.setFromDate(fromDate.toString());
+                        projectDetails.setToDate(toDate.toString());
+                        projectDetails.setGeneratedDate(generatedDate);
 
-					projectDetails.setLocation(location);
-					projectDetails.setSrvcMonthlyCost(0);
-					projectDetails.setMiscMonthlyBdgt(0);
-					projectDetails.setTotalMonthlyBdgt(0);
-					projectDetails.setMiscPricing(0);
-					projectDetails.setJustification("");
-					projectDetails.setSrvcRemainBdgt(rem_data.getSrvcRemainBdgt());
-					projectDetails.setMiscRemainBdgt(rem_data.getMiscRemainBdgt());
-					projectDetails.setTotalRemainBdgt(rem_data.getTotalRemainBdgt());
+                    } else {
 
-					return projectDetails;
+                        RemainingData rem_data = rem_repository.findRemData(agrmntNumber);
 
-				}
-			} else {
-				RemainingData rem_data = rem_repository.findRemData(agrmntNumber);
+                        projectDetails.setLocation(location);
+                        projectDetails.setSrvcMonthlyCost(0);
+                        projectDetails.setMiscMonthlyBdgt(0);
+                        projectDetails.setTotalMonthlyBdgt(0);
+                        projectDetails.setMiscPricing(0);
+                        projectDetails.setJustification("");
+                        projectDetails.setSrvcRemainBdgt(rem_data.getSrvcRemainBdgt());
+                        projectDetails.setMiscRemainBdgt(rem_data.getMiscRemainBdgt());
+                        projectDetails.setTotalRemainBdgt(rem_data.getTotalRemainBdgt());
 
-				projectDetails.setLocation(location);
-				projectDetails.setSrvcMonthlyCost(0);
-				projectDetails.setMiscMonthlyBdgt(0);
-				projectDetails.setTotalMonthlyBdgt(0);
-				projectDetails.setMiscPricing(0);
-				projectDetails.setJustification("");
-				projectDetails.setSrvcRemainBdgt(rem_data.getSrvcRemainBdgt());
-				projectDetails.setMiscRemainBdgt(rem_data.getMiscRemainBdgt());
-				projectDetails.setTotalRemainBdgt(rem_data.getTotalRemainBdgt());
+                        return projectDetails;
 
-				return projectDetails;
-			}
-		} else {
+                    }
+                } else {
+                    RemainingData rem_data = rem_repository.findRemData(agrmntNumber);
 
-			RemainingData rem_data = rem_repository.findRemData(agrmntNumber);
+                    projectDetails.setLocation(location);
+                    projectDetails.setSrvcMonthlyCost(0);
+                    projectDetails.setMiscMonthlyBdgt(0);
+                    projectDetails.setTotalMonthlyBdgt(0);
+                    projectDetails.setMiscPricing(0);
+                    projectDetails.setJustification("");
+                    projectDetails.setSrvcRemainBdgt(rem_data.getSrvcRemainBdgt());
+                    projectDetails.setMiscRemainBdgt(rem_data.getMiscRemainBdgt());
+                    projectDetails.setTotalRemainBdgt(rem_data.getTotalRemainBdgt());
 
-			projectDetails.setLocation(location);
-			projectDetails.setSrvcMonthlyCost(0);
-			projectDetails.setMiscMonthlyBdgt(0);
-			projectDetails.setTotalMonthlyBdgt(0);
-			projectDetails.setMiscPricing(0);
-			projectDetails.setJustification("");
-			projectDetails.setSrvcRemainBdgt(rem_data.getSrvcRemainBdgt());
-			projectDetails.setMiscRemainBdgt(rem_data.getMiscRemainBdgt());
-			projectDetails.setTotalRemainBdgt(rem_data.getTotalRemainBdgt());
+                    return projectDetails;
+                }
+            } else {
 
-			return projectDetails;
-		}
-	}
+                RemainingData rem_data = rem_repository.findRemData(agrmntNumber);
 
-	return projectDetails;
+                projectDetails.setLocation(location);
+                projectDetails.setSrvcMonthlyCost(0);
+                projectDetails.setMiscMonthlyBdgt(0);
+                projectDetails.setTotalMonthlyBdgt(0);
+                projectDetails.setMiscPricing(0);
+                projectDetails.setJustification("");
+                projectDetails.setSrvcRemainBdgt(rem_data.getSrvcRemainBdgt());
+                projectDetails.setMiscRemainBdgt(rem_data.getMiscRemainBdgt());
+                projectDetails.setTotalRemainBdgt(rem_data.getTotalRemainBdgt());
 
-	}
+                return projectDetails;
+            }
+        }
 
-	@Override
-	public List<String> getAgreementNumbers(String brand) {
-		List<String> agreementNumbers = repository.findAgreementNumbersByBrand(brand);
-		return agreementNumbers;
-	}
+        return projectDetails;
 
-	@Override
-	public List<String> getAgreementNumbersLocation(String brand, String location) {
-		List<String> agreementNumbers = repository.findAgreementNumbersByBrandLocation(brand, location);
-		return agreementNumbers;
-	}
+    }
 
-	@Override
-	public ResponseEntity<String> updateBilling(ProjectDetails projectDetails) {
-		Month month = Utilities.dateConvert(projectDetails.getToDate()).getMonth();
+    @Override
+    public List<String> getAgreementNumbers(String brand) {
+        List<String> agreementNumbers = repository.findAgreementNumbersByBrand(brand);
+        return agreementNumbers;
+    }
 
-		LocalDate generatedDate = Utilities.dateConvert(projectDetails.getGeneratedDate());
-		LocalDate fromDate = Utilities.dateConvert(projectDetails.getFromDate()).plusMonths(1);
-		LocalDate decemberEndDate = LocalDate.of(generatedDate.getYear(), Month.DECEMBER, 31);
+    @Override
+    public List<String> getAgreementNumbersLocation(String brand, String location) {
+        List<String> agreementNumbers = repository.findAgreementNumbersByBrandLocation(brand, location);
+        return agreementNumbers;
+    }
 
-		if (!StringUtils.equals("JANUARY", month.toString())) {
-			ProjectDetails preMonthRecord = repository.findByAgrmntNumberAndGeneratedDate(
-					projectDetails.getAgrmntNumber(),
-					Utilities.dateConvert(projectDetails.getGeneratedDate()).minusMonths(1).getMonthValue());
-			Utilities.calculateCostPerMonth(projectDetails, preMonthRecord);
+    @Override
+    public ResponseEntity<String> updateBilling(ProjectDetails projectDetails) {
+        Month month = Utilities.dateConvert(projectDetails.getToDate()).getMonth();
+
+        LocalDate generatedDate = Utilities.dateConvert(projectDetails.getGeneratedDate());
+        LocalDate fromDate = Utilities.dateConvert(projectDetails.getFromDate()).plusMonths(1);
+        LocalDate decemberEndDate = LocalDate.of(generatedDate.getYear(), Month.DECEMBER, 31);
+
+        if (!StringUtils.equals("JANUARY", month.toString())) {
+            ProjectDetails preMonthRecord = repository.findByAgrmntNumberAndGeneratedDate(
+                    projectDetails.getAgrmntNumber(),
+                    Utilities.dateConvert(projectDetails.getGeneratedDate()).minusMonths(1).getMonthValue());
+            Utilities.calculateCostPerMonth(projectDetails, preMonthRecord);
 //			projectDetails.setGeneratedDate(LocalDate.now().toString());
-			repository.save(projectDetails);
+            repository.save(projectDetails);
 
-			try {
-				Utilities.generateReport(projectDetails, Utilities.dateConvert(projectDetails.getFromDate()));
-			} catch (IOException e) {
-				e.printStackTrace();
-			} catch (InvalidFormatException e) {
-				e.printStackTrace();
-			}
+            try {
+                Utilities.generateReport(projectDetails, Utilities.dateConvert(projectDetails.getFromDate()));
+            } catch (IOException e) {
+                e.printStackTrace();
+            } catch (InvalidFormatException e) {
+                e.printStackTrace();
+            }
 
-			for (LocalDate date = fromDate; !date.isAfter(decemberEndDate); date = date.plusMonths(1)) {
+            for (LocalDate date = fromDate; !date.isAfter(decemberEndDate); date = date.plusMonths(1)) {
 
-				ProjectDetails currentReport = repository
-						.findByAgrmntNumberAndGeneratedDate(projectDetails.getAgrmntNumber(), date.getMonthValue());
-				ProjectDetails previousReport = repository.findByAgrmntNumberAndGeneratedDate(
-						projectDetails.getAgrmntNumber(), date.minusMonths(1).getMonthValue());
+                ProjectDetails currentReport = repository
+                        .findByAgrmntNumberAndGeneratedDate(projectDetails.getAgrmntNumber(), date.getMonthValue());
+                ProjectDetails previousReport = repository.findByAgrmntNumberAndGeneratedDate(
+                        projectDetails.getAgrmntNumber(), date.minusMonths(1).getMonthValue());
 
-				currentReport
-						.setSrvcRemainBdgt(previousReport.getSrvcRemainBdgt() - currentReport.getSrvcMonthlyCost());
-				// if (currentReport.getSrvcRemainBdgt() < 0)
-				// currentReport.setSrvcRemainBdgt(0);
-				currentReport
-						.setMiscRemainBdgt(previousReport.getMiscRemainBdgt() - currentReport.getMiscMonthlyBdgt());
-				// if (currentReport.getMiscRemainBdgt() < 0)
-				// currentReport.setMiscRemainBdgt(0);
-				currentReport.setTotalRemainBdgt(currentReport.getSrvcRemainBdgt() + currentReport.getMiscRemainBdgt());
-				// if (currentReport.getTotalRemainBdgt() < 0)
-				// currentReport.setTotalRemainBdgt(0);
-				repository.save(currentReport);
+                currentReport
+                        .setSrvcRemainBdgt(previousReport.getSrvcRemainBdgt() - currentReport.getSrvcMonthlyCost());
+                // if (currentReport.getSrvcRemainBdgt() < 0)
+                // currentReport.setSrvcRemainBdgt(0);
+                currentReport
+                        .setMiscRemainBdgt(previousReport.getMiscRemainBdgt() - currentReport.getMiscMonthlyBdgt());
+                // if (currentReport.getMiscRemainBdgt() < 0)
+                // currentReport.setMiscRemainBdgt(0);
+                currentReport.setTotalRemainBdgt(currentReport.getSrvcRemainBdgt() + currentReport.getMiscRemainBdgt());
+                // if (currentReport.getTotalRemainBdgt() < 0)
+                // currentReport.setTotalRemainBdgt(0);
+                repository.save(currentReport);
 
-				try {
-					Utilities.generateReport(currentReport, Utilities.dateConvert(currentReport.getFromDate()));
+                try {
+                    Utilities.generateReport(currentReport, Utilities.dateConvert(currentReport.getFromDate()));
 
-				} catch (IOException e) {
-					e.printStackTrace();
-				} catch (InvalidFormatException e) {
-					e.printStackTrace();
-				}
-			}
-		} else {
-			Utilities.calculateCostPerMonth(projectDetails, null);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                } catch (InvalidFormatException e) {
+                    e.printStackTrace();
+                }
+            }
+        } else {
+            Utilities.calculateCostPerMonth(projectDetails, null);
 //			projectDetails.setGeneratedDate(LocalDate.now().toString());
-			repository.save(projectDetails);
+            repository.save(projectDetails);
 
-			try {
-				Utilities.generateReport(projectDetails, Utilities.dateConvert(projectDetails.getFromDate()));
-			} catch (IOException e) {
-				e.printStackTrace();
-			} catch (InvalidFormatException e) {
-				e.printStackTrace();
-			}
+            try {
+                Utilities.generateReport(projectDetails, Utilities.dateConvert(projectDetails.getFromDate()));
+            } catch (IOException e) {
+                e.printStackTrace();
+            } catch (InvalidFormatException e) {
+                e.printStackTrace();
+            }
 
-			for (LocalDate date = fromDate; !date.isAfter(decemberEndDate); date = date.plusMonths(1)) {
+            for (LocalDate date = fromDate; !date.isAfter(decemberEndDate); date = date.plusMonths(1)) {
 
-				ProjectDetails currentReport = repository
-						.findByAgrmntNumberAndGeneratedDate(projectDetails.getAgrmntNumber(), date.getMonthValue());
-				ProjectDetails previousReport = repository.findByAgrmntNumberAndGeneratedDate(
-						projectDetails.getAgrmntNumber(), date.minusMonths(1).getMonthValue());
+                ProjectDetails currentReport = repository
+                        .findByAgrmntNumberAndGeneratedDate(projectDetails.getAgrmntNumber(), date.getMonthValue());
+                ProjectDetails previousReport = repository.findByAgrmntNumberAndGeneratedDate(
+                        projectDetails.getAgrmntNumber(), date.minusMonths(1).getMonthValue());
 
-				currentReport
-						.setSrvcRemainBdgt(previousReport.getSrvcRemainBdgt() - currentReport.getSrvcMonthlyCost());
-				// if (currentReport.getSrvcRemainBdgt() < 0)
-				// currentReport.setSrvcRemainBdgt(0);
-				currentReport
-						.setMiscRemainBdgt(previousReport.getMiscRemainBdgt() - currentReport.getMiscMonthlyBdgt());
-				// if (currentReport.getMiscRemainBdgt() < 0)
-				// currentReport.setMiscRemainBdgt(0);
-				currentReport.setTotalRemainBdgt(currentReport.getSrvcRemainBdgt() + currentReport.getMiscRemainBdgt());
-				// if (currentReport.getTotalRemainBdgt() < 0)
-				// currentReport.setTotalRemainBdgt(0);
-				repository.save(currentReport);
+                currentReport
+                        .setSrvcRemainBdgt(previousReport.getSrvcRemainBdgt() - currentReport.getSrvcMonthlyCost());
+                // if (currentReport.getSrvcRemainBdgt() < 0)
+                // currentReport.setSrvcRemainBdgt(0);
+                currentReport
+                        .setMiscRemainBdgt(previousReport.getMiscRemainBdgt() - currentReport.getMiscMonthlyBdgt());
+                // if (currentReport.getMiscRemainBdgt() < 0)
+                // currentReport.setMiscRemainBdgt(0);
+                currentReport.setTotalRemainBdgt(currentReport.getSrvcRemainBdgt() + currentReport.getMiscRemainBdgt());
+                // if (currentReport.getTotalRemainBdgt() < 0)
+                // currentReport.setTotalRemainBdgt(0);
+                repository.save(currentReport);
 
-				try {
-					Utilities.generateReport(currentReport, Utilities.dateConvert(currentReport.getFromDate()));
+                try {
+                    Utilities.generateReport(currentReport, Utilities.dateConvert(currentReport.getFromDate()));
 
-				} catch (IOException e) {
-					e.printStackTrace();
-				} catch (InvalidFormatException e) {
-					e.printStackTrace();
-				}
-			}
+                } catch (IOException e) {
+                    e.printStackTrace();
+                } catch (InvalidFormatException e) {
+                    e.printStackTrace();
+                }
+            }
 
-		}
-		return response;
-	}
-	
-	@Override
-	public ResponseEntity<String> updateBillingLocation(ProjectDetails projectDetails) {
-	    int monthValue = Utilities.dateConvert(projectDetails.getGeneratedDate()).getMonthValue();
-	  	repository.save(projectDetails);
+        }
+        return response;
+    }
 
-	    List<String> locations = Arrays.asList("Bangalore", "Gurugram");
-	    
-	    if (projectDetails.getLocation().equals("Pune")) {
-	        for (String location : locations) {
-	            updateLocationData(projectDetails, monthValue, location);
-	        }
-	    } else if (projectDetails.getLocation().equals("Bangalore")) {
-	        updateLocationData(projectDetails, monthValue, "Gurugram");
-	    }
+    @Override
+    public ResponseEntity<String> updateBillingLocation(ProjectDetails projectDetails) {
+        int monthValue = Utilities.dateConvert(projectDetails.getGeneratedDate()).getMonthValue();
+        repository.save(projectDetails);
 
-	    updateRemainingData(projectDetails);
-	    return ResponseEntity.ok("Update successful");
-	}
+        List<String> locations = Arrays.asList("Bangalore", "Gurugram");
 
-	private void updateLocationData(ProjectDetails projectDetails, int monthValue, String location) {
-	    ProjectDetails locationData = repository.findByAgrmntNumberAndGeneratedDateAndLocation(
-	        projectDetails.getAgrmntNumber(), monthValue, location
-	    );
+        if (projectDetails.getLocation().equals("Pune")) {
+            for (String location : locations) {
+                updateLocationData(projectDetails, monthValue, location);
+            }
+        } else if (projectDetails.getLocation().equals("Bangalore")) {
+            updateLocationData(projectDetails, monthValue, "Gurugram");
+        }
 
-	    if (locationData != null) {
-	        locationData.setSrvcRemainBdgt(projectDetails.getSrvcRemainBdgt() - locationData.getSrvcMonthlyCost());
-	        locationData.setMiscRemainBdgt(projectDetails.getMiscRemainBdgt() - locationData.getMiscMonthlyBdgt());
-	        locationData.setTotalRemainBdgt(locationData.getSrvcRemainBdgt() + locationData.getMiscRemainBdgt());
+        updateRemainingData(projectDetails);
+        return ResponseEntity.ok("Update successful");
+    }
 
-	        repository.save(locationData);	        
-	        generateReport(locationData);
-	    }
-	}
+    private void updateLocationData(ProjectDetails projectDetails, int monthValue, String location) {
+        ProjectDetails locationData = repository.findByAgrmntNumberAndGeneratedDateAndLocation(
+                projectDetails.getAgrmntNumber(), monthValue, location
+        );
 
-	private void updateRemainingData(ProjectDetails projectDetails) {
-	    RemainingData existingRemData = rem_repository.findRemData(projectDetails.getAgrmntNumber());
-	    existingRemData.setSrvcRemainBdgt(projectDetails.getSrvcRemainBdgt());
-	    existingRemData.setMiscRemainBdgt(projectDetails.getMiscRemainBdgt());
-	    existingRemData.setTotalRemainBdgt(existingRemData.getSrvcRemainBdgt() + existingRemData.getMiscRemainBdgt());
-	    rem_repository.save(existingRemData);
+        if (locationData != null) {
+            locationData.setSrvcRemainBdgt(projectDetails.getSrvcRemainBdgt() - locationData.getSrvcMonthlyCost());
+            locationData.setMiscRemainBdgt(projectDetails.getMiscRemainBdgt() - locationData.getMiscMonthlyBdgt());
+            locationData.setTotalRemainBdgt(locationData.getSrvcRemainBdgt() + locationData.getMiscRemainBdgt());
 
-	    generateReport(projectDetails);
-	}
+            repository.save(locationData);
+            generateReport(locationData);
+        }
+    }
 
-	private void generateReport(ProjectDetails projectDetails) {
-	    try {
-	        Utilities.generateReport(projectDetails, Utilities.dateConvert(projectDetails.getFromDate()));
-	    } catch (IOException | InvalidFormatException e) {
-	        e.printStackTrace(); 
-	    }
-	}
+    private void updateRemainingData(ProjectDetails projectDetails) {
+        RemainingData existingRemData = rem_repository.findRemData(projectDetails.getAgrmntNumber());
+        existingRemData.setSrvcRemainBdgt(projectDetails.getSrvcRemainBdgt());
+        existingRemData.setMiscRemainBdgt(projectDetails.getMiscRemainBdgt());
+        existingRemData.setTotalRemainBdgt(existingRemData.getSrvcRemainBdgt() + existingRemData.getMiscRemainBdgt());
+        rem_repository.save(existingRemData);
 
+        generateReport(projectDetails);
+    }
+
+    private void generateReport(ProjectDetails projectDetails) {
+        try {
+            Utilities.generateReport(projectDetails, Utilities.dateConvert(projectDetails.getFromDate()));
+        } catch (IOException | InvalidFormatException e) {
+            e.printStackTrace();
+        }
+    }
+
+
+    @Override
+    public ResponseEntity<String> signupEmployee(SignupEmployee employee) {
+        SignupEmployee employeeData = loginRepository.save(employee);
+        return Optional.ofNullable(employeeData).map(data -> {
+            return ResponseEntity.ok(data.getFirstName() + " Registered Successfully");
+        }).orElseGet(() -> ResponseEntity.badRequest().body("Employee registration failed."));
+    }
+
+    @Override
+    public boolean validateLogin(String emailId, String password) {
+        Optional<SignupEmployee> employee = loginRepository.findByEmailIdAndPassword(emailId, password);
+        return employee.isPresent();
+    }
 }
