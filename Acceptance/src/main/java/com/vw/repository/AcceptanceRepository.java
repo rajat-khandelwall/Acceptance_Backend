@@ -25,5 +25,5 @@ public interface AcceptanceRepository extends JpaRepository<ProjectDetails, Inte
 	
 	@Query(value = "SELECT DISTINCT p.agrmnt_number FROM project_details p WHERE p.brand = :brand AND p.location = :location", nativeQuery = true)
 	List<String> findAgreementNumbersByBrandLocation(@Param("brand") String brand, @Param("location") String location);
-	
+
 }  
